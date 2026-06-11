@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADASA — Reliability Intelligence Hub</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+  :root {
+    --bg:#0d1117;--surface:#161b22;--surface2:#1c2330;--border:#30363d;
+    --accent:#f97316;--accent2:#fb923c;--green:#22c55e;--yellow:#eab308;
+    --red:#ef4444;--blue:#3b82f6;--purple:#a855f7;
+    --text:#e6edf3;--muted:#8b949e;
+    --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;display:flex;flex-direction:column;}
+
+  header{border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;gap:10px;background:var(--surface);flex-shrink:0;flex-wrap:wrap;}
+  .logo-dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);}
+  .brand-logo{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+  .brand-icon{width:36px;height:36px;flex-shrink:0;}
+  .brand-text{display:flex;flex-direction:column;gap:2px;}
+  header h1{font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;line-height:1.2;margin:0;}
+  .brand-arabic{font-size:14px;font-weight:600;color:var(--accent);letter-spacing:.02em;line-height:1.2;direction:rtl;font-family:"Segoe UI","Noto Sans Arabic",sans-serif;}
+  .brand-divider{width:1px;height:32px;background:var(--border);margin:0 6px;flex-shrink:0;}
+  .header-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .ds-badge{font-size:10px;font-family:var(--mono);color:var(--muted);background:var(--surface2);border:1px solid var(--border);padding:3px 8px;border-radius:4px;}
+  #clock{font-size:11px;color:var(--muted);font-family:var(--mono);}
+
+  .main{display:grid;grid-template-columns:340px 1fr;flex:1;align-items:start;}
+
+  /* LEFT */
+  .left-panel{background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;height:100%;position:sticky;top:0;max-height:100vh;}
+  .panel-label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+
+  .eq-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;cursor:pointer;transition:all .2s;position:relative;}
+  .eq-card:hover{border-color:var(--accent);background:rgba(249,115,22,.04);}
+  .eq-card.selected{border-color:var(--accent);background:rgba(249,115,22,.07);}
+  .eq-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .eq-icon{font-size:20px;}
+  .eq-tag{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent);}
+  .eq-desc{font-size:11px;color:var(--muted);}
+  .eq-status{margin-left:auto;}
+  .sbadge{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.05em;}
+  .sbadge.down{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3);}
+  .sbadge.running{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3);}
+  .sbadge.monitoring{background:rgba(234,179,8,.15);color:var(--yellow);border:1px solid rgba(234,179,8,.3);}
+  .sdot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+  .sdot.pulse{animation:pulse 1.2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+  .eq-params{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:8px;}
+  .eq-param{background:var(--bg);border-radius:4px;padding:5px 7px;text-align:center;}
+  .eq-param .lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+  .eq-param .val{font-size:12px;font-weight:700;font-family:var(--mono);margin-top:1px;}
+  .eq-param.anom .val{color:var(--red);}
+  .eq-param.warn .val{color:var(--yellow);}
+  .eq-param.ok .val{color:var(--green);}
+
+  .alert-strip{display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:5px;font-size:11px;margin-top:8px;background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.25);color:var(--yellow);}
+  .alert-strip.red{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.25);color:var(--red);}
+
+  .diagnose-btn{width:100%;padding:11px;background:var(--accent);border:none;border-radius:6px;color:white;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.05em;transition:all .2s;margin-top:4px;}
+  .diagnose-btn:hover{background:var(--accent2);transform:translateY(-1px);}
+  .diagnose-btn:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;transform:none;}
+
+  /* RIGHT */
+  .right-panel{padding:22px 26px;display:flex;flex-direction:column;gap:18px;}
+
+  /* DATA SOURCES BAR */
+  .ds-bar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  .ds-pill{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 6px;text-align:center;transition:all .4s;}
+  .ds-pill.active{border-color:var(--accent);background:rgba(249,115,22,.07);}
+  .ds-pill.done{border-color:var(--green);background:rgba(34,197,94,.05);}
+  .ds-pill-icon{font-size:14px;margin-bottom:3px;}
+  .ds-pill-name{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);}
+  .ds-pill.active .ds-pill-name{color:var(--accent);}
+  .ds-pill.done .ds-pill-name{color:var(--green);}
+
+  /* LOG */
+  .log-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+  .log-hdr{display:flex;align-items:center;gap:7px;padding:9px 13px;border-bottom:1px solid var(--border);background:var(--surface2);}
+  .log-hdr span{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+  .log-stream{font-family:var(--mono);font-size:11px;padding:10px 13px;max-height:130px;overflow-y:auto;line-height:1.9;}
+  .le{display:flex;gap:10px;}
+  .lt{color:var(--muted);flex-shrink:0;}
+  .lm.info{color:var(--blue);}
+  .lm.warn{color:var(--yellow);}
+  .lm.error{color:var(--red);}
+  .lm.ok{color:var(--green);}
+  .lm.norm{color:var(--text);}
+  .lm.purple{color:var(--purple);}
+
+  /* DIAGNOSIS CARD */
+  .diag-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:visible;display:none;}
+  .diag-card.show{display:block;}
+  .diag-hdr{padding:14px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);}
+  .diag-hdr.critical{background:rgba(239,68,68,.07);border-bottom-color:rgba(239,68,68,.2);}
+  .diag-hdr.high{background:rgba(234,179,8,.07);border-bottom-color:rgba(234,179,8,.2);}
+  .diag-hdr.medium{background:rgba(59,130,246,.07);border-bottom-color:rgba(59,130,246,.2);}
+  .diag-hdr h2{font-size:13px;font-weight:700;letter-spacing:.03em;}
+  .sev-chip{margin-left:auto;padding:3px 10px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.07em;}
+  .sev-chip.critical{background:rgba(239,68,68,.2);color:var(--red);border:1px solid rgba(239,68,68,.4);}
+  .sev-chip.high{background:rgba(234,179,8,.2);color:var(--yellow);border:1px solid rgba(234,179,8,.4);}
+  .sev-chip.medium{background:rgba(59,130,246,.2);color:var(--blue);border:1px solid rgba(59,130,246,.4);}
+
+  .diag-body{padding:18px;display:flex;flex-direction:column;gap:16px;}
+  .sec-title{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;}
+
+  .fault-name{font-size:19px;font-weight:700;margin-bottom:3px;}
+  .fault-desc{font-size:12px;color:var(--muted);line-height:1.65;}
+
+  .conf-row{display:flex;align-items:center;gap:9px;margin-top:7px;}
+  .conf-bg{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+  .conf-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;transition:width 1.2s ease .3s;}
+  .conf-pct{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);}
+
+  .meta-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+  @media(max-width:1100px){.meta-grid{grid-template-columns:1fr 1fr;}}
+  .meta-box.loss{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.35);}
+  .meta-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+  .meta-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;font-weight:600;}
+  .meta-val{font-size:15px;font-weight:700;font-family:var(--mono);}
+  .meta-sub{font-size:9px;color:var(--muted);margin-top:3px;}
+  /* date filter */
+  .date-filter{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;}
+  .date-filter label{font-size:10px;color:var(--muted);display:block;margin-bottom:3px;}
+  .date-filter input[type=date]{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:11px;padding:6px 8px;border-radius:6px;outline:none;-webkit-appearance:none;color-scheme:dark;}
+  .date-filter input[type=date]:focus{border-color:var(--accent);}
+  .date-hint{font-size:9px;color:var(--muted);font-style:italic;margin-top:3px;}
+
+  /* SOURCES USED */
+  .src-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;}
+  .src-item{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:9px 11px;font-size:11px;line-height:1.55;}
+  .src-tag{display:inline-block;background:rgba(249,115,22,.15);color:var(--accent);border-radius:3px;font-size:9px;font-weight:700;font-family:var(--mono);padding:1px 5px;margin-bottom:4px;letter-spacing:.05em;}
+  .src-tag.pi{background:rgba(59,130,246,.15);color:var(--blue);}
+  .src-tag.elog{background:rgba(168,85,247,.15);color:var(--purple);}
+  .src-tag.sap{background:rgba(34,197,94,.15);color:var(--green);}
+  .src-tag.mto{background:rgba(234,179,8,.15);color:var(--yellow);}
+  .src-tag.pm{background:rgba(239,68,68,.15);color:var(--red);}
+
+  .cause-list,.action-list{display:flex;flex-direction:column;gap:6px;}
+  .cause-item{display:flex;gap:8px;padding:8px 10px;background:var(--surface2);border-radius:5px;font-size:12px;line-height:1.5;}
+  .cause-rank{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent);flex-shrink:0;margin-top:1px;}
+  .action-item{display:flex;gap:9px;padding:10px 12px;background:rgba(34,197,94,.04);border:1px solid rgba(34,197,94,.15);border-radius:6px;font-size:12px;line-height:1.5;}
+  .action-num{width:20px;height:20px;background:rgba(34,197,94,.15);color:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;font-family:var(--mono);}
+
+  .hist-list{display:flex;flex-direction:column;gap:5px;}
+  .hist-item{display:flex;gap:10px;align-items:flex-start;padding:7px 10px;background:var(--surface2);border-radius:5px;font-size:11px;color:var(--muted);}
+  .hist-date{font-family:var(--mono);color:var(--blue);flex-shrink:0;font-size:10px;margin-top:1px;}
+
+
+  .btm-box{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px;}
+  .btm-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;}
+  .btm-val{font-size:12px;font-weight:600;font-family:var(--mono);}
+
+  .fb-row{display:flex;gap:8px;align-items:center;padding-top:4px;border-top:1px solid var(--border);}
+  .fb-row span{font-size:11px;color:var(--muted);margin-right:2px;}
+  .fb-btn{padding:6px 13px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid;font-family:var(--sans);transition:all .15s;}
+  .fb-btn.yes{background:rgba(34,197,94,.1);color:var(--green);border-color:rgba(34,197,94,.3);}
+  .fb-btn.yes:hover{background:rgba(34,197,94,.2);}
+  .fb-btn.no{background:rgba(239,68,68,.1);color:var(--red);border-color:rgba(239,68,68,.3);}
+  .fb-btn.no:hover{background:rgba(239,68,68,.2);}
+  .fb-msg{font-size:11px;font-style:italic;display:none;}
+
+  .idle-msg{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);text-align:center;padding:50px 30px;background:var(--surface);border:1px solid var(--border);border-radius:8px;}
+  .idle-msg .ico{font-size:40px;opacity:.25;}
+  .idle-msg p{font-size:12px;line-height:1.7;max-width:320px;}
+
+  select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--sans);font-size:12px;padding:7px 9px;border-radius:6px;outline:none;appearance:none;}
+  select:focus{border-color:var(--accent);}
+  select:disabled{opacity:.4;cursor:not-allowed;}
+  /* Correction box */
+  .correction-box{display:none;margin-top:12px;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:14px;animation:fadeIn .25s ease;}
+  .correction-box.show{display:block;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+  .correction-title{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--red);margin-bottom:10px;}
+  .correction-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+  .correction-field label{font-size:10px;color:var(--muted);display:block;margin-bottom:4px;font-weight:600;letter-spacing:.05em;}
+  .correction-field input,.correction-field select,.correction-field textarea{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--sans);font-size:12px;padding:8px 10px;border-radius:6px;outline:none;resize:none;}
+  .correction-field input:focus,.correction-field select:focus,.correction-field textarea:focus{border-color:var(--red);}
+  .correction-field textarea{min-height:70px;line-height:1.5;}
+  .correction-field.full{grid-column:1/-1;}
+  .correction-actions{display:flex;gap:8px;align-items:center;margin-top:4px;}
+  .submit-btn{padding:8px 18px;background:var(--red);border:none;border-radius:6px;color:white;font-family:var(--sans);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;}
+  .submit-btn:hover{background:#dc2626;transform:translateY(-1px);}
+  .cancel-btn{padding:8px 14px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:var(--sans);font-size:12px;cursor:pointer;transition:all .15s;}
+  .cancel-btn:hover{border-color:var(--text);color:var(--text);}
+  .submit-ok{font-size:11px;color:var(--green);display:none;font-style:italic;}
+  .filter-row{display:flex;flex-direction:column;gap:8px;}
+  .filter-chain{display:flex;flex-direction:column;gap:8px;}
+  .filter-step{display:flex;align-items:center;gap:7px;}
+  .filter-arrow{color:var(--muted);font-size:10px;padding-left:2px;}
+  .filter-reset{background:none;border:none;color:var(--muted);font-size:10px;cursor:pointer;padding:0;font-family:var(--sans);text-decoration:underline;align-self:flex-end;margin-top:-4px;}
+  .filter-reset:hover{color:var(--text);}
+  .eq-count{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:2px;}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand-logo">
+    <svg class="brand-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Magnifier glass -->
+      <circle cx="15" cy="15" r="9.5" stroke="#f97316" stroke-width="2.2"/>
+      <circle cx="15" cy="15" r="5.5" stroke="#f97316" stroke-width="1.2" stroke-dasharray="2.5 2" opacity="0.5"/>
+      <circle cx="15" cy="15" r="2" fill="#f97316" opacity="0.9"/>
+      <!-- Handle -->
+      <line x1="22.5" y1="22.5" x2="31" y2="31" stroke="#f97316" stroke-width="2.8" stroke-linecap="round"/>
+      <!-- Glow dot on lens -->
+      <circle cx="11.5" cy="11.5" r="1.5" fill="white" opacity="0.35"/>
+    </svg>
+    <div class="brand-text">
+      <h1>ADASA — Reliability Intelligence Hub</h1>
+      <div class="brand-arabic">عدسة</div>
+    </div>
+  </div>
+  <div class="brand-divider"></div>
+  <div class="header-right">
+    <span class="ds-badge">📡 PI System</span>
+    <span class="ds-badge">📋 eLog</span>
+    <span class="ds-badge">🗂️ SAP PM/CM</span>
+    <span class="ds-badge">📌 MTO</span>
+    <span class="ds-badge">🔬 Proactive Monitoring</span>
+    <span id="clock">--:--:--</span>
+  </div>
+</header>
+
+<div class="main">
+  <!-- LEFT -->
+  <div class="left-panel">
+    <div class="filter-row">
+      <div class="panel-label">Filter Equipment</div>
+      <div class="filter-chain">
+
+        <!-- Step 1: Directorate -->
+        <div>
+          <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;">① Directorate</label>
+          <select id="dirSelect" onchange="onDirChange(this.value)">
+            <option value="">— All Directorates —</option>
+            <option value="North Oil">North Oil</option>
+          </select>
+        </div>
+
+        <!-- Step 2: Station -->
+        <div>
+          <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;">② Station</label>
+          <select id="stationSelect" onchange="onStationChange(this.value)" disabled>
+            <option value="">— Select Directorate first —</option>
+          </select>
+        </div>
+
+        <!-- Step 3: Equipment -->
+        <div>
+          <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px;">③ Equipment</label>
+          <select id="eqSelect" onchange="onEqChange(this.value)" disabled>
+            <option value="">— Select Station first —</option>
+          </select>
+          <div class="eq-count" id="eqCount"></div>
+        </div>
+
+        <button class="filter-reset" onclick="resetFilters()">↺ Reset filters</button>
+      </div>
+
+      <!-- Date Period -->
+      <div style="margin-top:8px;">
+        <div class="panel-label" style="margin-bottom:6px;">④ Date Period</div>
+        <div class="date-filter">
+          <div>
+            <label>From</label>
+            <input type="date" id="dateFrom" onchange="onDateChange()">
+          </div>
+          <div>
+            <label>To <span style="color:var(--accent);font-size:9px;">(blank = today)</span></label>
+            <input type="date" id="dateTo" onchange="onDateChange()">
+          </div>
+        </div>
+        <div class="date-hint" id="dateHint">No date filter applied — showing all events</div>
+      </div>
+    </div>
+
+    <div id="eqDetail" style="display:none">
+      <div class="panel-label">Equipment Status</div>
+      <div class="eq-card selected" id="eqCard">
+        <div class="eq-header">
+          <div class="eq-icon" id="eqIcon">⚙️</div>
+          <div>
+            <div class="eq-tag" id="eqTag">—</div>
+            <div class="eq-desc" id="eqDesc">—</div>
+          </div>
+          <div class="eq-status">
+            <div class="sbadge" id="eqBadge"><div class="sdot pulse"></div><span id="eqBadgeTxt">—</span></div>
+          </div>
+        </div>
+        <div class="eq-params" id="eqParams"></div>
+        <div class="alert-strip" id="eqAlert" style="display:none"></div>
+      </div>
+      <button class="diagnose-btn" id="diagnoseBtn" onclick="runDiagnosis()">🧠 RUN AI DIAGNOSIS</button>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right-panel" id="rightPanel">
+
+    <!-- Data Source Pipeline -->
+    <div>
+      <div class="panel-label">Data Source Pipeline</div>
+      <div class="ds-bar">
+        <div class="ds-pill" id="ds0"><div class="ds-pill-icon">🌅</div><div class="ds-pill-name">Morning<br>Report</div></div>
+        <div class="ds-pill" id="ds1"><div class="ds-pill-icon">📡</div><div class="ds-pill-name">PI<br>System</div></div>
+        <div class="ds-pill" id="ds2"><div class="ds-pill-icon">🔬</div><div class="ds-pill-name">Proactive<br>Monitor</div></div>
+        <div class="ds-pill" id="ds3"><div class="ds-pill-icon">📌</div><div class="ds-pill-name">MTO<br>Threats</div></div>
+        <div class="ds-pill" id="ds4"><div class="ds-pill-icon">📋</div><div class="ds-pill-name">eLog<br>Ops</div></div>
+        <div class="ds-pill" id="ds5"><div class="ds-pill-icon">🗂️</div><div class="ds-pill-name">SAP<br>PM/CM</div></div>
+        <div class="ds-pill" id="ds6"><div class="ds-pill-icon">🧠</div><div class="ds-pill-name">ML<br>Model</div></div>
+      </div>
+    </div>
+
+    <!-- System Log -->
+    <div>
+      <div class="panel-label">System Log</div>
+      <div class="log-box">
+        <div class="log-hdr"><div class="logo-dot" style="width:6px;height:6px"></div><span>Live Feed</span></div>
+        <div class="log-stream" id="logStream">
+          <div class="le"><span class="lt">--:--:--</span><span class="lm norm">System ready. Select equipment and run AI diagnosis.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Idle message -->
+    <div class="idle-msg" id="idleMsg">
+      <div class="ico">🔧</div>
+      <p>Select any equipment from the left panel and click <strong>Run AI Diagnosis</strong> to see a full fault analysis powered by your PI, eLog, SAP, MTO and Proactive Monitoring data.</p>
+    </div>
+
+    <!-- Diagnosis Card -->
+    <div class="diag-card" id="diagCard" style="display:none">
+      <div class="diag-hdr" id="diagHdr">
+        <span style="font-size:18px">🤖</span>
+        <h2>AI Fault Diagnosis &amp; Technician Recommendation</h2>
+        <div class="sev-chip" id="sevChip">—</div>
+      </div>
+      <div class="diag-body">
+
+        <div>
+          <div class="sec-title">Diagnosed Fault</div>
+          <div class="fault-name" id="faultName">—</div>
+          <div class="fault-desc" id="faultDesc">—</div>
+          <div class="conf-row">
+            <span style="font-size:10px;color:var(--muted)">Model confidence</span>
+            <div class="conf-bg"><div class="conf-fill" id="confFill"></div></div>
+            <span class="conf-pct" id="confPct">—</span>
+          </div>
+        </div>
+
+        <div class="meta-grid">
+          <div class="meta-box loss"><div class="meta-lbl">Production Loss</div><div class="meta-val" id="mDefer$" style="color:var(--red)">—</div></div>
+          <div class="meta-box"><div class="meta-lbl">Alarm / Trip</div><div class="meta-val" id="mAlarm" style="color:var(--red);font-size:12px">—</div></div>
+          <div class="meta-box"><div class="meta-lbl">Trip Time</div><div class="meta-val" id="mTripTime" style="color:var(--red)">—</div></div>
+          <div class="meta-box"><div class="meta-lbl">Trip Duration</div><div class="meta-val" id="mTime">—</div></div>
+        </div>
+
+        <div>
+          <div class="sec-title">Data Sources Used</div>
+          <div class="src-grid" id="srcGrid"></div>
+        </div>
+
+        <div>
+          <div class="sec-title">Root Cause Analysis</div>
+          <div class="cause-list" id="causeList"></div>
+        </div>
+
+        <div>
+          <div class="sec-title">Recommended Actions for Technician</div>
+          <div class="action-list" id="actionList"></div>
+        </div>
+
+        <div>
+          <div class="sec-title">Historical Cases (SAP PM/CM + eLog)</div>
+          <div class="hist-list" id="histList"></div>
+        </div>
+
+        <div class="bottom-row">
+          <div class="btm-box"><div class="btm-lbl">Est. Downtime</div><div class="btm-val" id="bDowntime" style="color:var(--yellow)">—</div></div>
+          <div class="btm-box"><div class="btm-lbl">Production Loss</div><div class="btm-val" id="bDefer" style="color:var(--red)">—</div></div>
+          <div class="btm-box"><div class="btm-lbl">SAP Cost Est.</div><div class="btm-val" id="bCost" style="color:var(--purple)">—</div></div>
+        </div>
+
+        <div class="fb-row">
+          <span>Was this diagnosis accurate?</span>
+          <button class="fb-btn yes" id="fbYes" onclick="fb(true)">👍 Confirm</button>
+          <button class="fb-btn no"  id="fbNo"  onclick="fb(false)">👎 Reject</button>
+          <span class="fb-msg" id="fbMsg"></span>
+        </div>
+
+        <!-- Correction Box — shown on Reject -->
+        <div class="correction-box" id="correctionBox">
+          <div class="correction-title">⚠️ What is the correct diagnosis?</div>
+          <div class="correction-grid">
+
+            <div class="correction-field">
+              <label>Actual Fault Type</label>
+              <select id="corrFaultType">
+                <option value="">— Select —</option>
+                <option>Bearing Failure</option>
+                <option>Mechanical Seal Leak</option>
+                <option>Cavitation / Low NPSH</option>
+                <option>Motor Overload</option>
+                <option>High Bearing Temperature</option>
+                <option>Blocked Discharge / Valve Issue</option>
+                <option>Lube Oil System Failure</option>
+                <option>Anti-Surge / Governor Fault</option>
+                <option>Intercooler Fouling</option>
+                <option>Rotor Imbalance</option>
+                <option>Electrical / Relay Fault</option>
+                <option>Instrumentation / False Trip</option>
+                <option>Other</option>
+              </select>
+            </div>
+
+            <div class="correction-field">
+              <label>Actual Root Cause</label>
+              <select id="corrRootCause">
+                <option value="">— Select —</option>
+                <option>Lubrication failure</option>
+                <option>PM interval exceeded</option>
+                <option>Process upset / supply issue</option>
+                <option>Control system fault</option>
+                <option>Fouling / blockage</option>
+                <option>Mechanical wear</option>
+                <option>Electrical fault</option>
+                <option>Operator error</option>
+                <option>Design / material issue</option>
+                <option>Instrumentation fault</option>
+                <option>Other</option>
+              </select>
+            </div>
+
+            <div class="correction-field">
+              <label>Corrective Action Taken</label>
+              <input type="text" id="corrAction" placeholder="e.g. Replaced bearing, cleaned strainer…">
+            </div>
+
+            <div class="correction-field">
+              <label>Reported By</label>
+              <input type="text" id="corrReporter" placeholder="Technician name">
+            </div>
+
+            <div class="correction-field full">
+              <label>Additional Notes</label>
+              <textarea id="corrNotes" placeholder="Describe what was actually found on inspection…"></textarea>
+            </div>
+
+          </div>
+          <div class="correction-actions">
+            <button class="submit-btn" onclick="submitCorrection()">📤 Submit Correction</button>
+            <button class="cancel-btn" onclick="cancelCorrection()">Cancel</button>
+            <span class="submit-ok" id="submitOk">✅ Correction submitted — flagged for model re-training.</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+<script>
+setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleTimeString();},1000);
+
+
+function onDateChange() {
+  const fromVal = document.getElementById('dateFrom').value;
+  const toVal   = document.getElementById('dateTo').value;
+  const today   = new Date().toISOString().split('T')[0];
+  const toDate  = toVal || today;
+  const hint    = document.getElementById('dateHint');
+
+  if (!fromVal && !toVal) {
+    hint.textContent = 'No date filter applied — showing all events';
+    hint.style.color = 'var(--muted)';
+  } else if (fromVal && !toVal) {
+    hint.textContent = `From ${fromVal} → today (${today})`;
+    hint.style.color = 'var(--accent)';
+  } else if (!fromVal && toVal) {
+    hint.textContent = `All events up to ${toVal}`;
+    hint.style.color = 'var(--accent)';
+  } else {
+    hint.textContent = `Period: ${fromVal} → ${toDate}`;
+    hint.style.color = 'var(--accent)';
+  }
+}
+
+// ─── FILTER DATA (from Nibras sheet) ─────────────────────────────────────────
+const NIBRAS = {
+  "K-101A": {directorate:"North Oil", station:"Fahud", label:"K-101A · Compressor · Down"},
+  "K-102B": {directorate:"North Oil", station:"Fahud", label:"K-102B · Compressor · Down"},
+  "K-201A": {directorate:"North Oil", station:"Fahud", label:"K-201A · Compressor · Running"},
+  "K-201B": {directorate:"North Oil", station:"Fahud", label:"K-201B · Compressor · Down"},
+  "K-301C": {directorate:"North Oil", station:"Fahud", label:"K-301C · Turbine · Down"},
+  "K-402D": {directorate:"North Oil", station:"Fahud", label:"K-402D · Equipment · Monitoring"},
+  "K-105A": {directorate:"North Oil", station:"Fahud", label:"K-105A · Generator · Down"},
+  "K-501":  {directorate:"North Oil", station:"Fahud", label:"K-501 · Steam Turbine · Monitoring"},
+  "K-502":  {directorate:"North Oil", station:"Fahud", label:"K-502 · Steam Turbine · Down (PM)"},
+  "K-701":  {directorate:"North Oil", station:"Fahud", label:"K-701 · Expander · Down"},
+  "P-101A": {directorate:"North Oil", station:"Fahud", label:"P-101A · Pump · Monitoring"},
+  "P-101B": {directorate:"North Oil", station:"Fahud", label:"P-101B · Pump · Running (Standby)"},
+  "P-205B": {directorate:"North Oil", station:"Fahud", label:"P-205B · Pump · Down"},
+  "P-602A": {directorate:"North Oil", station:"Fahud", label:"P-602A · Pump · Monitoring (Seal Leak)"},
+};
+
+function onDirChange(dir) {
+  const stSel = document.getElementById('stationSelect');
+  const eqSel = document.getElementById('eqSelect');
+  document.getElementById('eqCount').textContent = '';
+
+  // Reset downstream
+  stSel.innerHTML = '<option value="">— All Stations —</option>';
+  eqSel.innerHTML = '<option value="">— Select Station first —</option>';
+  eqSel.disabled = true;
+
+  if (!dir) { stSel.disabled = true; return; }
+
+  // Get unique stations for this directorate
+  const stations = [...new Set(Object.values(NIBRAS)
+    .filter(e => e.directorate === dir)
+    .map(e => e.station))].sort();
+
+  stations.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s; opt.textContent = s;
+    stSel.appendChild(opt);
+  });
+  stSel.disabled = false;
+
+  // If only one station, auto-select it
+  if (stations.length === 1) {
+    stSel.value = stations[0];
+    onStationChange(stations[0]);
+  }
+
+  // Reset right panel
+  resetRightPanel();
+}
+
+function onStationChange(station) {
+  const eqSel = document.getElementById('eqSelect');
+  const dir = document.getElementById('dirSelect').value;
+  document.getElementById('eqCount').textContent = '';
+
+  eqSel.innerHTML = '<option value="">— Choose equipment —</option>';
+
+  if (!station) { eqSel.disabled = true; resetRightPanel(); return; }
+
+  const matches = Object.entries(NIBRAS)
+    .filter(([,v]) => v.station === station && (!dir || v.directorate === dir))
+    .sort((a,b) => a[0].localeCompare(b[0]));
+
+  matches.forEach(([tag, v]) => {
+    const opt = document.createElement('option');
+    opt.value = tag; opt.textContent = v.label;
+    eqSel.appendChild(opt);
+  });
+
+  eqSel.disabled = false;
+  document.getElementById('eqCount').textContent = `${matches.length} equipment found`;
+  resetRightPanel();
+}
+
+function resetFilters() {
+  document.getElementById('dirSelect').value = '';
+  const stSel = document.getElementById('stationSelect');
+  stSel.innerHTML = '<option value="">— Select Directorate first —</option>';
+  stSel.disabled = true;
+  const eqSel = document.getElementById('eqSelect');
+  eqSel.innerHTML = '<option value="">— Select Station first —</option>';
+  eqSel.disabled = true;
+  document.getElementById('eqCount').textContent = '';
+  document.getElementById('dateFrom').value = '';
+  document.getElementById('dateTo').value = '';
+  document.getElementById('dateHint').textContent = 'No date filter applied — showing all events';
+  document.getElementById('eqDetail').style.display = 'none';
+  resetRightPanel();
+}
+
+function resetRightPanel() {
+  document.getElementById('idleMsg').style.display = 'flex';
+  document.getElementById('diagCard').style.display='none';
+  document.getElementById('eqDetail').style.display = 'none';
+  for(let i=0;i<7;i++) document.getElementById('ds'+i).className='ds-pill';
+  const ls = document.getElementById('logStream');
+  ls.innerHTML = `<div class="le"><span class="lt">${new Date().toLocaleTimeString()}</span><span class="lm norm">Select Directorate → Station → Equipment to begin.</span></div>`;
+}
+
+// ─── REAL DATA FROM EXCEL (v4.1 — Updated) ────────────────────────────────────
+const DB = {
+  "K-101A":{
+    icon:"🔄", desc:"Compressor · Fahud · North Oil · 300 BOE", status:"down",
+    pi:{vib:4.5,temp:75,rpm:10500},
+    alarmCode:"HH Vibration Trip (15.2 mm/s) @ 09:42",
+    woNumber:"WO-100899", woDesc:"Emergency Bearing Replacement", woCost:"$45,000",
+    tripTime:"2026-06-05 · 09:42",
+    mttr:"36 hrs",
+    bpdDollar:"$3,000",
+    tripDuration:"6 hrs 42 min",
+    proactive:{level:"High",symptom:"Bearing degradation signature detected",confidence:89,engineer:"Ahmed S.",date:"2026-06-01"},
+    mto:{id:"THR-8842",desc:"Recurring premature bearing wear — Intercooler fouling causing high temp trips",deferment:"5,000–6,000 BPD / 15 MMSCFD",action:"Upgrade bearing material; Redesign cooler bundle metallurgy"},
+    elog:{operator:"Khalid / Yousef",note:"Compressor tripped on HH vibration at 09:42. Blocked in valves. Tank levels dropping, suction unstable at 06:25.",time:"09:42"},
+    faultName:"Rolling Element Bearing Failure + Intercooler Fouling Risk",
+    faultDesc:"Vibration reached 4.5 mm/s running (15.2 mm/s at trip per PI). Proactive monitoring flagged bearing degradation 4 days prior (89% confidence, Ahmed S.). Two active MTO threats: THR-8842 (bearing wear) and THR-9105 (intercooler fouling). SAP CM WO-100899 raised. Nibras: 300 BOE capacity, Fahud station.",
+    severity:"critical",
+    confidence:93,
+    causes:[
+      "PI System: Vibration escalated 4.5 → 15.2 mm/s before trip (tag VT-K101A-DE). Speed 10,500 RPM at last running reading.",
+      "Proactive Monitoring (Ahmed S.): Bearing degradation flagged 2026-06-01 — 4 days pre-failure, 89% confidence",
+      "MTO THR-8842: Recurring premature bearing wear, 5,000 BPD deferment · MTO THR-9105: Intercooler fouling risk, 6,000 BPD",
+      "SAP WO-100899: Emergency CM raised — MTTR 36h, cost $45,000. Nibras capacity: 300 BOE at Fahud."
+    ],
+    actions:[
+      "Isolate K-101A — do not restart until full bearing inspection complete per WO-100899",
+      "Execute SAP WO-100899: emergency bearing replacement procedure MP-BRG-011",
+      "Pull lube oil sample — check metallic particulate (Fe/Cu) before disassembly",
+      "Engage Ahmed S. (PTM) to review vibration trend; address THR-9105 intercooler fouling concurrently",
+      "Review MTO THR-8842: evaluate bearing material upgrade to extend service life",
+      "Confirm Fahud station standby availability — 300 BOE capacity at risk"
+    ],
+    history:[
+      {date:"2026-06-01",src:"Proactive Monitor",note:"High alert — bearing degradation detected. Ahmed S. assigned. 89% confidence."},
+      {date:"2026-06-05",src:"eLog (Khalid)",note:"Compressor tripped on HH vibration. Blocked in valves. Maintenance initiated."},
+      {date:"2026-06-07",src:"MTO THR-8842",note:"Recurring premature bearing wear. 5,000 BPD deferment. High priority."},
+      {date:"2026-06-11",src:"MTO THR-9105",note:"Intercooler fouling — high temp trip risk. 6,000 BPD. Redesign recommended."}
+    ],
+    downtime:"36 hours (SAP MTTR)",
+    deferment:"5,000–6,000 BPD · 15 MMSCFD · Fahud",
+    cost:"$45,000"
+  },
+
+  "K-102B":{
+    icon:"🔄", desc:"Compressor · Fahud · North Oil · 220 BOE", status:"down",
+    pi:{vib:8.5,temp:88,rpm:0},
+    alarmCode:"Anti-Surge Trip + Compressor Surge Event @ 11:45",
+    woNumber:"WO-101750", woDesc:"16k Hour Major Inspection", woCost:"$125,000",
+    tripTime:"2026-06-09 · 11:45",
+    bpdDollar:"$2,200",
+    mttr:"336 hrs",
+    tripDuration:"4 hrs 25 min",
+    proactive:{level:"Medium",symptom:"Governor valve hysteresis",confidence:72,engineer:"Ali H.",date:"2026-06-01"},
+    mto:{id:"THR-9130",desc:"Governor valve sticking",deferment:"3,500 BPD / 4 MMSCFD",action:"Upgrade actuator and control linkage"},
+    elog:{operator:"Hassan",note:"Compressor tripped. Flared gas and secured.",time:"14:22"},
+    faultName:"Anti-Surge Valve Failure + Major PM Inspection Due",
+    faultDesc:"K-102B tripped on anti-surge event. PI shows vibration 8.5 mm/s, bearing temp 88°C at trip. Proactive monitoring flagged governor valve hysteresis on 2026-06-01 (72% confidence, Ali H.). SAP WO-101750 is a 16k Hour Major Inspection ($125,000, 336h MTTR). MTO THR-9130 requires actuator upgrade. Nibras: 220 BOE, Fahud.",
+    severity:"critical",
+    confidence:88,
+    causes:[
+      "PI System: Vibration 8.5 mm/s, bearing temp 88°C at trip — surge-induced mechanical excitation",
+      "Proactive Monitoring (Ali H.): Governor valve hysteresis detected 2026-06-01, 72% confidence — pre-failure warning unacted upon",
+      "SAP WO-101750: 16k Hour Major PM Inspection — $125,000, 336h MTTR (14 days) — highest cost work order in fleet",
+      "MTO THR-9130: Governor valve sticking — actuator and control linkage upgrade required"
+    ],
+    actions:[
+      "Do not restart K-102B with anti-surge bypass — surge protection is inactive",
+      "Execute SAP WO-101750: 16k Hour Major Inspection (14-day scope — plan resources and scaffold)",
+      "Engage Ali H. (PTM) to review governor valve hysteresis trend before restart",
+      "Complete MTO THR-9130: upgrade actuator and control linkage during major inspection window",
+      "Test anti-surge valve across full operating envelope before return to service",
+      "Coordinate 220 BOE Fahud capacity impact with area superintendent — 336h downtime window"
+    ],
+    history:[
+      {date:"2026-06-01",src:"Proactive Monitor",note:"Medium alert — governor valve hysteresis. Ali H. assigned. 72% confidence."},
+      {date:"2026-06-09",src:"eLog (Hassan)",note:"Compressor tripped on surge. Flared gas. Blocked in. Anti-surge valve manually bypassed."},
+      {date:"2026-06-06",src:"MTO THR-9130",note:"Governor valve sticking — 3,500 BPD / 4 MMSCFD risk. High priority."},
+      {date:"2026-06-10",src:"SAP PM",note:"WO-101750 — 16k Hour Major Inspection. $125,000. MTTR 336h."}
+    ],
+    downtime:"336 hours / 14 days (Major PM)",
+    deferment:"3,500 BPD · 4 MMSCFD · Fahud",
+    cost:"$125,000"
+  },
+
+  "K-201A":{
+    icon:"🔄", desc:"Compressor · Fahud · North Oil · 300 BOE", status:"running",
+    pi:{vib:3.8,temp:78,rpm:11200},
+    alarmCode:"No active alarm — Running normally",
+    woNumber:"N/A", woDesc:"No open work orders", woCost:"—",
+    tripTime:"Running",
+    mttr:"—",
+    bpdDollar:"—",
+    tripDuration:"N/A — Running",
+    proactive:null,
+    mto:null,
+    elog:null,
+    faultName:"No Active Fault — Equipment Running Within Normal Parameters",
+    faultDesc:"K-201A is currently running. PI shows vibration 3.8 mm/s (normal), bearing temp 78°C, speed 11,200 RPM. No proactive monitoring alerts, no open MTO threats, no eLog entries. Nibras: 300 BOE capacity at Fahud station. No immediate action required.",
+    severity:"medium",
+    confidence:96,
+    causes:[
+      "PI System: Vibration 3.8 mm/s — within acceptable range (<4.5 mm/s alert threshold)",
+      "Bearing temp 78°C — normal operating range for this compressor class",
+      "No Proactive Monitoring alerts, no MTO threats, no operator observations",
+      "Nibras: 300 BOE capacity — Fahud station production running as expected"
+    ],
+    actions:[
+      "No immediate corrective action required",
+      "Maintain scheduled PM intervals and lube oil checks",
+      "Consider adding to Proactive Monitoring scope given 300 BOE capacity risk",
+      "Monitor vibration trend — if exceeding 4.0 mm/s sustained, raise PTM review"
+    ],
+    history:[
+      {date:"2026-06-10",src:"PI System",note:"Running normally — vib 3.8 mm/s, temp 78°C, speed 11,200 RPM."}
+    ],
+    downtime:"N/A — running",
+    deferment:"300 BOE capacity at Fahud (no current risk)",
+    cost:"$0"
+  },
+
+  "K-201B":{
+    icon:"🔄", desc:"Compressor · Fahud · North Oil · 300 BOE", status:"down",
+    pi:{vib:4.1,temp:115,rpm:0},
+    alarmCode:"High Discharge Temp Trip Stage 2 (115°C) @ 14:22",
+    woNumber:"WO-101700", woDesc:"Clean Intercooler Bundle", woCost:"$8,500",
+    mttr:"48 hrs",
+    proactive:null,
+    tripTime:"2026-06-10 · 14:22",
+    bpdDollar:"$3,000",
+    tripDuration:"4 hrs 07 min",
+    mto:{id:"THR-9110 (K-301C related)",desc:"Intercooler fouling causing high temp trips",deferment:"6,000 BPD / 20 MMSCFD",action:"Redesign cooler bundle metallurgy"},
+    elog:{operator:"Hassan",note:"High discharge temp alarm Stage 2 at 14:15. Tripped 14:22. Flared gas and secured.",time:"14:15–14:22"},
+    faultName:"Intercooler Fouling — High Discharge Temperature Trip",
+    faultDesc:"Bearing temperature spiked to 115°C triggering trip at 14:22. Hassan logged Stage 2 high temp alarm 7 minutes before trip. SAP WO-101700 raised for intercooler bundle cleaning ($8,500, 48h MTTR). Highest production deferment: 6,000 BPD / 20 MMSCFD. Nibras: 300 BOE, Fahud.",
+    severity:"critical",
+    confidence:90,
+    causes:[
+      "PI System: Temperature escalated to 115°C on Stage 2 — trip at 14:22. Speed dropped to 0 RPM.",
+      "eLog (Hassan): Stage 2 high temp alarm at 14:15 — 7-minute warning window before trip triggered",
+      "SAP WO-101700: Intercooler bundle cleaning — $8,500, 48h MTTR. Work order in execution.",
+      "Nibras: 300 BOE capacity at Fahud — highest individual capacity unit currently down"
+    ],
+    actions:[
+      "K-201B secured — gas flared, valves blocked per Hassan's eLog at 14:22",
+      "Execute SAP WO-101700: clean intercooler bundle (48h scope — assign crew immediately)",
+      "Inspect Stage 2 intercooler for fouling deposits, tube blockage, and cooling water flow",
+      "Review cooler bundle design against MTO intercooler fouling threat — initiate metallurgy redesign",
+      "Escalate to area superintendent: 6,000 BPD / 20 MMSCFD deferment — highest in current fleet events",
+      "After cleaning: verify discharge temp at all stages before load ramp-up"
+    ],
+    history:[
+      {date:"2026-06-10",src:"eLog (Hassan)",note:"Stage 2 HH temp alarm 14:15. Compressor tripped 14:22. Gas flared. Secured."},
+      {date:"2026-06-10",src:"SAP CM",note:"WO-101700 — Clean intercooler bundle. $8,500. MTTR 48h."},
+      {date:"2026-06-10",src:"Engineering",note:"6,000 BPD / 20 MMSCFD unplanned deferment at Station Delta."}
+    ],
+    downtime:"48 hours (SAP MTTR)",
+    deferment:"6,000 BPD · 20 MMSCFD (fleet maximum)",
+    cost:"$8,500"
+  },
+
+  "K-301C":{
+    icon:"⚙️", desc:"Turbine/Compressor · Fahud · North Oil · 250 BOE", status:"down",
+    pi:{vib:1.5,temp:80,rpm:0},
+    alarmCode:"Lube Oil Pressure Drop Trip + Motor Overload",
+    woNumber:"WO-101700", woDesc:"Clean Intercooler Bundle", woCost:"$8,500",
+    tripTime:"2026-06-08 · 14:30",
+    bpdDollar:"$2,500",
+    mttr:"48 hrs",
+    proactive:{level:"High",
+    tripDuration:"5 hrs 48 min",symptom:"Rotor imbalance developing",confidence:85,engineer:"Tariq K.",date:"2026-06-08"},
+    mto:{id:"THR-9110",desc:"Turbine rotor imbalance",deferment:"8,000 BPD",action:"Schedule rotor wash and re-balance"},
+    elog:{operator:"Yousef",note:"Pump tripped on low suction. Started P-101B.",time:"06:30"},
+    faultName:"Lube Oil Pressure Loss + Rotor Imbalance Developing",
+    faultDesc:"K-301C has two concurrent issues: (1) Lube oil pressure drop trip on 2026-06-08 — filter replaced and system reset per morning report. (2) Proactive monitoring flagged rotor imbalance developing on 2026-06-08 (85% confidence, Tariq K.). MTO THR-9110 identifies 8,000 BPD risk — highest MTO deferment in register. Nibras: 250 BOE, Fahud.",
+    severity:"critical",
+    confidence:85,
+    causes:[
+      "Morning Report (2026-06-08): Lube oil pressure drop trip. Filter replaced, system reset — but rotor condition unresolved.",
+      "Proactive Monitoring (Tariq K.): Rotor imbalance developing, High alert, 85% confidence — same date as lube oil trip",
+      "MTO THR-9110: Turbine rotor imbalance — 8,000 BPD deferment (highest in MTO register). Rotor wash and re-balance required.",
+      "PI System: Vibration 1.5 mm/s at last reading (post-reset) — rotor imbalance not yet visible in vibration but trending"
+    ],
+    actions:[
+      "Verify lube oil pressure stable post-filter replacement before any restart",
+      "Do NOT dismiss rotor imbalance — schedule controlled shutdown for rotor wash and re-balance (MTO THR-9110)",
+      "Engage Tariq K. (PTM) for detailed vibration spectrum review before restart authorization",
+      "Increase PI vibration monitoring to 15-minute intervals — set conservative alert at 4.0 mm/s",
+      "Coordinate 8,000 BPD production planning impact with operations — highest deferment in fleet",
+      "Raise formal work order for rotor wash procedure in SAP — link to WO-101700 scope review"
+    ],
+    history:[
+      {date:"2026-06-08",src:"Morning Report",note:"Lube Oil Pressure Drop Trip. System reset. Filter replaced."},
+      {date:"2026-06-08",src:"Proactive Monitor",note:"High alert — rotor imbalance developing. Tariq K. assigned. 85% confidence."},
+      {date:"2026-06-09",src:"MTO THR-9110",note:"Turbine rotor imbalance — 8,000 BPD deferment. Rotor wash & re-balance. Medium priority."}
+    ],
+    downtime:"48h (current) + planned rotor wash window",
+    deferment:"8,000 BPD (highest MTO risk in fleet)",
+    cost:"$8,500 (intercooler) + rotor work TBD"
+  },
+
+  "K-402D":{
+    icon:"⚙️", desc:"Equipment · Fahud · North Oil · 200 BOE", status:"monitoring",
+    pi:{vib:3.0,temp:55,rpm:1450},
+    alarmCode:"Proactive Alert — Seal Flush Pressure Fluctuating (Low)",
+    woNumber:"MTO THR-9122", woDesc:"Chronic Seal Leaks", woCost:"TBD",
+    mttr:"Planned",
+    tripTime:"Monitoring",
+    bpdDollar:"—",
+    proactive:{level:"Low",
+    tripDuration:"N/A — Monitoring",symptom:"Seal flush pressure fluctuating",confidence:60,engineer:"Sarah M.",date:"2026-06-05"},
+    mto:{id:"THR-9122",desc:"Chronic seal leaks on crude pumps",deferment:"1,500 BPD · Station Delta",action:"Upgrade to double mechanical seal"},
+    elog:{operator:"Hassan",note:"High discharge temp alarm on Stage 2.",time:"14:15"},
+    faultName:"Seal Flush Pressure Fluctuation — Pre-Failure Monitoring",
+    faultDesc:"K-402D is running at 1,450 RPM with normal vibration (3.0 mm/s) and temperature (55°C). Proactive monitoring flagged seal flush pressure fluctuating on 2026-06-05 (60% confidence, Sarah M.). MTO THR-9122 addresses chronic seal leaks across fleet — upgrade to double mechanical seal recommended. Engineering component shows 6,000 BPD deferment risk at Station Delta. Nibras: 200 BOE, Fahud.",
+    severity:"medium",
+    confidence:72,
+    causes:[
+      "Proactive Monitoring (Sarah M.): Seal flush pressure fluctuating since 2026-06-05 — lowest confidence alert (60%) but pattern consistent with early seal degradation",
+      "MTO THR-9122: Chronic seal leaks — 1,500 BPD fleet risk. Double mechanical seal upgrade recommended.",
+      "Engineering Component: 6,000 BPD deferment at Station Delta linked to K-402D unit group",
+      "PI System: All parameters normal — seal issue is pre-failure stage, no process impact yet"
+    ],
+    actions:[
+      "Monitor seal flush pressure daily and trend against PI baseline",
+      "Engage Sarah M. (PTM) for seal flush pressure trend analysis",
+      "Plan controlled seal replacement at next available maintenance window",
+      "Implement MTO THR-9122: upgrade to double mechanical seal (API Plan 53B)",
+      "Verify seal flush supply filter condition — check for partial blockage",
+      "Set PI alarm on seal flush pressure deviation > 0.5 bar from normal"
+    ],
+    history:[
+      {date:"2026-06-05",src:"Proactive Monitor",note:"Low alert — seal flush pressure fluctuating. Sarah M. assigned. 60% confidence."},
+      {date:"2026-06-10",src:"MTO THR-9122",note:"Chronic seal leaks on crude pumps. Double mechanical seal upgrade. 1,500 BPD risk."},
+      {date:"2026-06-10",src:"Engineering",note:"6,000 BPD deferment at Station Delta — K-402D group impact."}
+    ],
+    downtime:"Planned — next maintenance window",
+    deferment:"1,500 BPD (seal upgrade) · 200 BOE Fahud capacity",
+    cost:"TBD — double seal upgrade"
+  },
+
+  "K-105A":{
+    icon:"⚡", desc:"Generator · Fahud · North Oil · 250 BOE", status:"down",
+    pi:{vib:1.1,temp:60,rpm:0},
+    alarmCode:"Reverse Power Relay Trip @ 09:05",
+    woNumber:"WO-101420", woDesc:"Reset Relays and Test Synchronization", woCost:"$1,200",
+    tripTime:"2026-06-02 · 09:05",
+    bpdDollar:"$2,500",
+    mttr:"4 hrs",
+    tripDuration:"4 hrs 15 min",
+    proactive:null,
+    mto:null,
+    elog:null,
+    faultName:"Reverse Power Protection Trip — Synchronization Fault",
+    faultDesc:"Generator tripped on reverse power relay at 09:05. PI confirms low vibration (1.1 mm/s) and moderate temp (60°C) — no mechanical damage. Electrical team reset relays and re-synchronized. SAP WO-101420 completed ($1,200, 4h MTTR). Engineering records: 2,500 BPD / 4 MMSCFD deferment at Station Beta. Nibras: 250 BOE, Fahud.",
+    severity:"high",
+    confidence:87,
+    causes:[
+      "PI System: Vibration 1.1 mm/s, temp 60°C at trip — confirms electrical root cause, no mechanical damage",
+      "Morning Report: Reverse power relay trip. Electrical team reset relays and re-synchronized.",
+      "SAP WO-101420: Relay reset and sync test — $1,200 cost, 4h MTTR (completed)",
+      "Engineering: 2,500 BPD / 4 MMSCFD unplanned trip deferment at Station Beta logged"
+    ],
+    actions:[
+      "Verify relay reset is stable — monitor for repeat reverse power event over 24h",
+      "Electrical team: full relay test and calibration per protection settings review",
+      "Investigate reverse power root cause: grid disturbance, synchronizer fault, or load rejection",
+      "Review synchronization procedure with operators",
+      "Consider adding K-105A to Proactive Monitoring if reverse power events recur",
+      "Update SAP WO-101420 with confirmed root cause and close out"
+    ],
+    history:[
+      {date:"2026-06-02",src:"Morning Report",note:"Reverse power relay trip. Electrical team reset relays and synchronized."},
+      {date:"2026-06-02",src:"SAP CM",note:"WO-101420 — relay reset and sync test. $1,200. 4h MTTR."},
+      {date:"2026-06-02",src:"Engineering",note:"2,500 BPD / 4 MMSCFD unplanned deferment at Station Beta."}
+    ],
+    downtime:"4 hours (completed)",
+    deferment:"2,500 BPD · 4 MMSCFD · Station Beta",
+    cost:"$1,200"
+  },
+
+  "K-501":{
+    icon:"🌀", desc:"Steam Turbine · Fahud · North Oil · 150 BOE", status:"monitoring",
+    pi:{vib:6.5,temp:82,rpm:5100},
+    alarmCode:"Proactive Alert — Rotor Imbalance Developing (High)",
+    woNumber:"MTO THR-9110 (shared)", woDesc:"Rotor Wash & Re-balance", woCost:"~$8,000",
+    tripTime:"Monitoring",
+    bpdDollar:"—",
+    mttr:"Planned",
+    proactive:{level:"High",
+    tripDuration:"N/A — Monitoring",symptom:"Rotor imbalance developing",confidence:85,engineer:"Tariq K.",date:"2026-06-08"},
+    mto:{id:"THR-9110",desc:"Turbine rotor imbalance",deferment:"8,000 BPD",action:"Schedule rotor wash and re-balance"},
+    elog:{operator:"Khalid",note:"Noticed slight casing vibration increase on PI screen.",time:"08:30"},
+    faultName:"Progressive Rotor Imbalance — Intervention Before Trip Critical",
+    faultDesc:"K-501 is running at 5,100 RPM with vibration at 6.5 mm/s — elevated and trending upward. Proactive monitoring flagged rotor imbalance developing on 2026-06-08 (85% confidence, Tariq K.). Operator Khalid independently observed casing vibration increase at 08:30. MTO THR-9110: 8,000 BPD risk. Intervention before trip is critical. Nibras: 150 BOE, Fahud.",
+    severity:"high",
+    confidence:85,
+    causes:[
+      "PI System: Vibration 6.5 mm/s at 5,100 RPM — elevated above 4.5 mm/s threshold, trending upward",
+      "Proactive Monitoring (Tariq K.): Rotor imbalance developing — High alert, 85% AI confidence on 2026-06-08",
+      "eLog (Khalid): Independent operator observation of casing vibration increase at 08:30 — corroborates PI data",
+      "MTO THR-9110: 8,000 BPD production risk — rotor wash and dynamic re-balance required"
+    ],
+    actions:[
+      "Schedule controlled shutdown immediately — do not wait for trip event",
+      "Execute MTO THR-9110: rotor wash and dynamic re-balance procedure",
+      "Engage Tariq K. (PTM) for full vibration spectrum analysis before shutdown planning",
+      "Increase PI vibration monitoring frequency to every 15 minutes",
+      "Set interim conservative trip setpoint at 7.5 mm/s",
+      "Coordinate 150 BOE Fahud production impact — 8,000 BPD risk requires superintendent approval"
+    ],
+    history:[
+      {date:"2026-06-08",src:"Proactive Monitor",note:"High alert — rotor imbalance developing. Tariq K. assigned. 85% confidence."},
+      {date:"2026-06-10",src:"eLog (Khalid)",note:"Casing vibration increase observed on PI screen at 08:30 — matches proactive alert."},
+      {date:"2026-06-09",src:"MTO THR-9110",note:"Turbine rotor imbalance — 8,000 BPD. Rotor wash & re-balance. Medium priority."}
+    ],
+    downtime:"Planned — schedule at next window",
+    deferment:"8,000 BPD (highest risk — shared with K-301C)",
+    cost:"~$8,000 (rotor wash + re-balance)"
+  },
+
+  "K-502":{
+    icon:"🌀", desc:"Steam Turbine · Fahud · North Oil · 150 BOE", status:"down",
+    pi:{vib:8.0,temp:65,rpm:0},
+    alarmCode:"Planned Outage — 16k Hour PM in Execution",
+    woNumber:"WO-101750 (shared)", woDesc:"16k Hour Major Inspection", woCost:"$125,000",
+    mttr:"336 hrs",
+    proactive:null,
+    tripTime:"2026-06-10 · Planned PM",
+    bpdDollar:"—",
+    tripDuration:"N/A — Planned",
+    mto:null,
+    elog:null,
+    faultName:"Planned 16k Hour Major Inspection — Scheduled Outage",
+    faultDesc:"K-502 is on planned outage executing 16k Hour Major PM (WO-101750, $125,000, 336h / 14 days). PI shows vibration 8.0 mm/s and temp 65°C at last reading before shutdown — within expected range for pre-inspection state. No unplanned fault. Nibras: 150 BOE, Fahud.",
+    severity:"medium",
+    confidence:99,
+    causes:[
+      "Morning Report: Planned outage — executing 16k Hour PM in SAP (scheduled event)",
+      "SAP PM WO-101750: 16k Hour Major Inspection — $125,000, MTTR 336h (14 days) — planned and budgeted",
+      "PI System: Vibration 8.0 mm/s at last running reading — flagged for inspection but not a trip condition",
+      "No proactive monitoring alerts or MTO threats — this is a time-based PM event"
+    ],
+    actions:[
+      "Continue executing SAP PM WO-101750 per planned scope",
+      "Inspect all major components during 16k window: bearings, seals, rotor, couplings, blading",
+      "Review vibration trend (8.0 mm/s pre-shutdown) — inspect rotor and bearing surfaces carefully",
+      "Coordinate spare parts readiness to avoid extending 336h planned MTTR",
+      "Brief operations on 14-day availability impact — 150 BOE Fahud capacity offline",
+      "Update SAP with all findings and component replacements upon completion"
+    ],
+    history:[
+      {date:"2026-06-10",src:"Morning Report",note:"Planned outage — executing 16k Hour PM. SAP WO-101750 in progress."},
+      {date:"2026-06-10",src:"SAP PM",note:"WO-101750 — 16k Hour Major Inspection. $125,000. MTTR 336h (14 days)."}
+    ],
+    downtime:"336 hours / 14 days (planned)",
+    deferment:"150 BOE Fahud capacity (planned, budgeted)",
+    cost:"$125,000"
+  },
+
+  "K-701":{
+    icon:"⚙️", desc:"Expander · Fahud · North Oil · 120 BOE", status:"down",
+    pi:{vib:12.5,temp:90,rpm:0},
+    alarmCode:"Overspeed Trip @ 11:12",
+    woNumber:"WO-101485", woDesc:"Calibrate Governor and Speed Probes", woCost:"$4,500",
+    tripTime:"2026-06-04 · 11:12",
+    mttr:"18 hrs",
+    proactive:null,
+    mto:null,
+    bpdDollar:"$1,200",
+    tripDuration:"4 hrs 30 min",
+    elog:{operator:"Yousef (P-101B)",note:"Overspeed trip activated. Securing inlet valves.",time:"11:12"},
+    faultName:"Overspeed Trip — Governor / Speed Probe Fault",
+    faultDesc:"K-701 tripped on overspeed at 11:12. PI shows high vibration at 12.5 mm/s and bearing temp 90°C at trip — consistent with overspeed mechanical excitation. SAP WO-101485 raised for governor calibration and speed probe verification ($4,500, 18h MTTR). Mechanical inspection ongoing. Nibras: 120 BOE, Fahud.",
+    severity:"critical",
+    confidence:84,
+    causes:[
+      "PI System: Vibration 12.5 mm/s and bearing temp 90°C at trip — elevated values confirm overspeed mechanical loads",
+      "SAP WO-101485: Governor calibration and speed probe verification — $4,500, 18h MTTR",
+      "eLog (P-101B/Yousef): Overspeed trip confirmed at 11:12 — inlet valves secured immediately",
+      "No Proactive Monitoring alert for K-701 — recommend adding governor health to monitoring scope"
+    ],
+    actions:[
+      "Do not restart K-701 until mechanical inspection complete and root cause confirmed",
+      "Execute SAP WO-101485: calibrate governor and verify all speed probes",
+      "Inspect overspeed trip mechanism — confirm trip function is operational",
+      "Inspect bearings given 12.5 mm/s vibration at trip — check for damage",
+      "Add K-701 governor health parameters to Proactive Monitoring scope",
+      "After calibration: perform trip test at reduced load before full restart"
+    ],
+    history:[
+      {date:"2026-06-04",src:"eLog (Yousef)",note:"Overspeed trip at 11:12. Inlet valves secured. Mechanical inspection initiated."},
+      {date:"2026-06-04",src:"SAP CM",note:"WO-101485 — Governor calibration and speed probe verification. $4,500. 18h MTTR."},
+      {date:"2026-06-04",src:"Engineering",note:"3,500 BPD / 10 MMSCFD unplanned deferment at Station Epsilon."}
+    ],
+    downtime:"18 hours (SAP MTTR)",
+    deferment:"3,500 BPD · 10 MMSCFD · 120 BOE Fahud",
+    cost:"$4,500"
+  },
+
+  "P-101A":{
+    icon:"💧", desc:"Pump · Fahud · North Oil · 100 BOE", status:"monitoring",
+    pi:{vib:2.2,temp:50,rpm:3550},
+    alarmCode:"Proactive — Casing Vibration Increase (Observation)",
+    woNumber:"WO-101580", woDesc:"Replace Fan Motor Bearings", woCost:"$3,200",
+    tripTime:"Monitoring",
+    mttr:"12 hrs",
+    bpdDollar:"—",
+    tripDuration:"4 hrs 05 min",
+    proactive:null,
+    mto:null,
+    elog:{operator:"Khalid",note:"Noticed slight casing vibration increase on PI screen.",time:"08:30"},
+    faultName:"Casing Vibration Increase — Bearing Wear Suspected",
+    faultDesc:"P-101A currently running at 3,550 RPM with vibration 2.2 mm/s. Operator Khalid observed casing vibration increase at 08:30 on PI screen. SAP WO-101580 raised for fan motor bearing replacement ($3,200, 12h MTTR). Previous trip: low suction pressure on 2026-06-07 (linked to K-301C eLog). Nibras: 100 BOE, Fahud.",
+    severity:"medium",
+    confidence:78,
+    causes:[
+      "eLog (Khalid): Casing vibration increase observed at 08:30 — operator-initiated alert, not yet at alarm level",
+      "SAP WO-101580: Fan motor bearing replacement raised — $3,200, 12h MTTR (proactive replacement)",
+      "Previous event: K-301C eLog shows suction pressure trip linked to P-101A supply chain on 2026-06-07",
+      "PI System: Vibration 2.2 mm/s — currently normal but trending up per operator observation"
+    ],
+    actions:[
+      "Execute SAP WO-101580: replace fan motor bearings at next available window (12h MTTR)",
+      "Increase PI vibration monitoring frequency and set alert at 3.5 mm/s",
+      "Inspect motor coupling and fan impeller for signs of wear or imbalance",
+      "Verify suction supply pressure stability — cross-reference K-301C supply chain event",
+      "Run uncoupled motor test post-bearing replacement before full re-commissioning",
+      "Report findings in SAP and update Nibras maintenance record for Fahud station"
+    ],
+    history:[
+      {date:"2026-06-07",src:"eLog (K-301C/Yousef)",note:"Suction pressure trip linked to P-101A supply chain. P-101B started as standby."},
+      {date:"2026-06-10",src:"eLog (Khalid)",note:"Casing vibration increase observed on PI screen at 08:30."},
+      {date:"2026-06-08",src:"SAP CM",note:"WO-101580 — Replace fan motor bearings. $3,200. 12h MTTR."}
+    ],
+    downtime:"12 hours (planned bearing replacement)",
+    deferment:"100 BOE Fahud capacity if taken offline",
+    cost:"$3,200"
+  },
+
+  "P-101B":{
+    icon:"💧", desc:"Pump (Standby) · Fahud · North Oil · 100 BOE", status:"running",
+    pi:{vib:2.5,temp:52,rpm:0},
+    alarmCode:"Running as Standby — Activated 2026-06-07",
+    woNumber:"WO-101485 (shared)", woDesc:"Calibrate Governor and Speed Probes", woCost:"$4,500",
+    tripTime:"Running",
+    mttr:"18 hrs",
+    bpdDollar:"—",
+    tripDuration:"N/A — Standby",
+    proactive:null,
+    mto:null,
+    elog:{operator:"Yousef",note:"Overspeed trip activated. Securing inlet valves.",time:"11:12"},
+    faultName:"Standby Pump Active — Monitor for Extended Run Wear",
+    faultDesc:"P-101B was started as standby on 2026-06-07 after P-101A suction pressure trip. Currently running. SAP WO-101485 is linked (governor/speed probe scope). PI shows vibration 2.5 mm/s and temp 52°C — normal. Nibras: 100 BOE, Fahud. Risk: extended standby run without PM may accelerate wear.",
+    severity:"medium",
+    confidence:80,
+    causes:[
+      "Morning Report: P-101B running as standby following P-101A low suction trip on 2026-06-07",
+      "PI System: Vibration 2.5 mm/s, temp 52°C — normal operating parameters",
+      "SAP WO-101485 linked: governor and speed probe scope — ensure P-101B is included in calibration",
+      "Risk: prolonged standby operation without PM may cause undetected bearing wear"
+    ],
+    actions:[
+      "Confirm P-101B is running stably — check PI trend for any vibration increase",
+      "Ensure P-101B is included in SAP WO-101485 governor/speed probe calibration scope",
+      "Plan return of P-101A once suction issue and bearing work complete",
+      "Perform P-101B health check if it has been running >72h continuously as standby",
+      "Update Nibras CMMS run hours for P-101B to reflect standby activation"
+    ],
+    history:[
+      {date:"2026-06-07",src:"Morning Report",note:"P-101B started as standby after P-101A low suction trip."},
+      {date:"2026-06-04",src:"SAP CM",note:"WO-101485 — Governor and speed probe calibration. $4,500. 18h MTTR."}
+    ],
+    downtime:"N/A — running as active standby",
+    deferment:"100 BOE Fahud (covered by P-101B currently)",
+    cost:"$0 immediate"
+  },
+
+  "P-205B":{
+    icon:"💧", desc:"Pump · Fahud · North Oil · 100 BOE", status:"down",
+    pi:{vib:15.2,temp:95,rpm:0},
+    alarmCode:"HH Vibration Trip (15.2 mm/s) + Surge Anomaly",
+    woNumber:"WO-101600", woDesc:"Anti-Surge Valve Repair", woCost:"$15,000",
+    tripTime:"2026-06-05 · 09:42",
+    mttr:"24 hrs",
+    bpdDollar:"$1,000",
+    tripDuration:"5 hrs 40 min",
+    proactive:{level:"High",symptom:"Surge control anomalies detected",confidence:92,engineer:"Ahmed S.",date:"2026-06-02"},
+    mto:{id:"THR-9025",desc:"Anti-surge system reliability",deferment:"4,500 BPD / 5 MMSCFD",action:"Complete overhaul of surge logic"},
+    elog:{operator:"Khalid",note:"Tripped due to surge. Blocked in.",time:"11:45"},
+    faultName:"High Vibration Trip + Anti-Surge System Failure",
+    faultDesc:"P-205B tripped with vibration at 15.2 mm/s and bearing temp 95°C — second-highest vibration reading in the fleet after K-701. Proactive monitoring flagged surge control anomalies on 2026-06-02 (92% confidence — highest AI confidence in entire dataset, Ahmed S.). SAP WO-101600 raised ($15,000, 24h MTTR). MTO THR-9025: anti-surge overhaul. Engineering: 3,000 BPD / 5 MMSCFD at Station Beta.",
+    severity:"critical",
+    confidence:92,
+    causes:[
+      "PI System: Vibration 15.2 mm/s and bearing temp 95°C at trip — severe mechanical excitation from surge event",
+      "Proactive Monitoring (Ahmed S.): Surge control anomalies flagged 2026-06-02 — 92% AI confidence (highest in dataset)",
+      "MTO THR-9025: Anti-surge system reliability — complete logic overhaul required",
+      "eLog (Khalid): Tripped due to surge. Blocked in. Anti-surge system failed to prevent surge."
+    ],
+    actions:[
+      "Do not restart P-205B — surge protection not active (valve bypassed per Khalid eLog)",
+      "Execute SAP WO-101600: Anti-surge valve inspection and repair (24h MTTR)",
+      "Engage Ahmed S. (PTM) — 92% confidence alert was raised 7 days before trip, review timeline",
+      "Complete MTO THR-9025: full overhaul of anti-surge control logic",
+      "Inspect bearings — 15.2 mm/s vibration at trip may have caused bearing damage",
+      "Test anti-surge valve response across full operating range before restart"
+    ],
+    history:[
+      {date:"2026-06-02",src:"Proactive Monitor",note:"High alert — surge control anomalies. Ahmed S. assigned. 92% confidence (highest in fleet)."},
+      {date:"2026-06-09",src:"eLog (Khalid)",note:"Tripped due to surge. Blocked in. Anti-surge valve failed."},
+      {date:"2026-06-10",src:"MTO THR-9025",note:"Anti-surge system reliability — 4,500 BPD. Full logic overhaul required."},
+      {date:"2026-06-08",src:"Engineering",note:"3,000 BPD / 5 MMSCFD unplanned deferment at Station Beta."}
+    ],
+    downtime:"24 hours (SAP MTTR)",
+    deferment:"4,500 BPD · 5 MMSCFD · Station Beta",
+    cost:"$15,000"
+  },
+
+  "P-602A":{
+    icon:"💧", desc:"Pump · Fahud · North Oil · 150 BOE", status:"monitoring",
+    pi:{vib:12.5,temp:90,rpm:0},
+    alarmCode:"Overspeed Trip / High Vibration (12.5 mm/s) @ 11:12",
+    woNumber:"MTO THR-9122", woDesc:"Chronic Seal Leaks on Crude Pumps", woCost:"TBD",
+    mttr:"Planned",
+    tripTime:"2026-06-04 · 11:12",
+    bpdDollar:"—",
+    proactive:null,
+    mto:{id:"THR-9122",
+    tripDuration:"4 hrs 30 min",desc:"Chronic seal leaks on crude pumps",deferment:"1,500 BPD",action:"Upgrade to double mechanical seal"},
+    elog:null,
+    faultName:"High Vibration Trip + Chronic Mechanical Seal Leak",
+    faultDesc:"P-602A shows PI data with vibration 12.5 mm/s and bearing temp 90°C at last reading (2026-06-04). Morning report also flags minor mechanical seal leak with containment pan placed and MTO created. MTO THR-9122 identifies chronic seal leaks across crude pumps — double mechanical seal upgrade recommended. Nibras: 150 BOE, Fahud.",
+    severity:"high",
+    confidence:81,
+    causes:[
+      "PI System: Vibration 12.5 mm/s and bearing temp 90°C at last reading (2026-06-04) — high vibration event",
+      "Morning Report (2026-06-10): Minor mechanical seal leak — containment pan placed, MTO created, pump running",
+      "MTO THR-9122: Chronic seal leaks on crude pumps — 1,500 BPD deferment risk across fleet",
+      "No Proactive Monitoring alert — both the vibration event and seal leak occurred without pre-failure warning"
+    ],
+    actions:[
+      "Monitor seal leak rate closely — containment pan is a temporary measure only",
+      "Plan controlled shutdown for seal replacement at next opportunity window",
+      "Implement MTO THR-9122: upgrade to double mechanical seal (API Plan 53B)",
+      "Investigate 12.5 mm/s vibration event on 2026-06-04 — check if bearing damage was incurred",
+      "Add P-602A to Proactive Monitoring scope — no alerts were raised before either fault",
+      "Verify seal flush supply pressure and flow after replacement"
+    ],
+    history:[
+      {date:"2026-06-04",src:"PI System",note:"Vibration 12.5 mm/s, temp 90°C — high vibration event recorded."},
+      {date:"2026-06-10",src:"Morning Report",note:"Minor mechanical seal leak. Containment pan placed. MTO created. Pump running."},
+      {date:"2026-06-10",src:"MTO THR-9122",note:"Chronic crude pump seal leaks. Double mechanical seal upgrade. 1,500 BPD risk."}
+    ],
+    downtime:"Planned — next maintenance window",
+    deferment:"1,500 BPD (seal upgrade) · 150 BOE Fahud",
+    cost:"TBD — double seal upgrade"
+  }
+};
+
+
+const srcTagMap = {
+  "Morning Report":"norm","PI System":"pi","Proactive Monitor":"pm",
+  "MTO":"mto","eLog":"elog","SAP CM":"sap","SAP PM":"sap","Engineering":"norm"
+};
+
+function onEqChange(val){
+  if(!val){document.getElementById('eqDetail').style.display='none';return;}
+  const d=DB[val];
+  document.getElementById('eqDetail').style.display='block';
+  document.getElementById('eqTag').textContent=val;
+  document.getElementById('eqDesc').textContent=d.desc;
+  document.getElementById('eqIcon').textContent=d.icon;
+
+  const badge=document.getElementById('eqBadge');
+  const btxt=document.getElementById('eqBadgeTxt');
+  if(d.status==='down'){badge.className='sbadge down';btxt.textContent='TRIPPED';badge.querySelector('.sdot').className='sdot';}
+  else if(d.status==='monitoring'){badge.className='sbadge monitoring';btxt.textContent='MONITORING';badge.querySelector('.sdot').className='sdot pulse';}
+  else{badge.className='sbadge running';btxt.textContent='RUNNING';badge.querySelector('.sdot').className='sdot pulse';}
+
+  // Params
+  const pg=document.getElementById('eqParams');
+  const vibOk=d.pi.vib<4, vibWarn=d.pi.vib>=4&&d.pi.vib<10, vibAnom=d.pi.vib>=10;
+  const tmpOk=d.pi.temp<85, tmpWarn=d.pi.temp>=85&&d.pi.temp<100, tmpAnom=d.pi.temp>=100;
+  pg.innerHTML=`
+    <div class="eq-param ${vibAnom?'anom':vibWarn?'warn':'ok'}"><div class="lbl">Vibration</div><div class="val">${d.pi.vib}</div><div style="font-size:9px;color:var(--muted)">mm/s</div></div>
+    <div class="eq-param ${tmpAnom?'anom':tmpWarn?'warn':'ok'}"><div class="lbl">Brg Temp</div><div class="val">${d.pi.temp}</div><div style="font-size:9px;color:var(--muted)">°C</div></div>
+    <div class="eq-param ${d.pi.rpm===0?'anom':'ok'}"><div class="lbl">Speed</div><div class="val">${d.pi.rpm}</div><div style="font-size:9px;color:var(--muted)">RPM</div></div>`;
+
+  // Alert strip
+  const al=document.getElementById('eqAlert');
+  if(d.proactive){
+    al.style.display='flex';
+    al.className=`alert-strip ${d.proactive.level==='High'?'red':''}`;
+    al.innerHTML=`⚠️ Proactive: ${d.proactive.symptom} (${d.proactive.confidence}% conf.)`;
+  } else {
+    al.style.display='none';
+  }
+
+  // Reset right panel
+  document.getElementById('idleMsg').style.display='flex';
+  document.getElementById('diagCard').style.display='none';
+  document.getElementById('fbMsg').style.display='none';
+  document.getElementById('correctionBox').classList.remove('show');
+  document.getElementById('fbYes').style.opacity='1';
+  document.getElementById('fbNo').style.opacity='1';
+  document.getElementById('submitOk').style.display='none';
+  for(let i=0;i<7;i++){document.getElementById('ds'+i).className='ds-pill';}
+  const ls=document.getElementById('logStream');
+  ls.innerHTML=`<div class="le"><span class="lt">${new Date().toLocaleTimeString()}</span><span class="lm norm">Equipment ${val} selected. Ready to run diagnosis.</span></div>`;
+}
+
+let running=false;
+function runDiagnosis(){
+  if(running)return;
+  const val=document.getElementById('eqSelect').value;
+  if(!val||!DB[val])return;
+  running=true;
+  document.getElementById('idleMsg').style.display='none';
+  document.getElementById('diagnoseBtn').disabled=true;
+  document.getElementById('idleMsg').style.display='none';
+  document.getElementById('diagCard').className='diag-card';
+
+  const d=DB[val];
+  const logs=[
+    [200,  `⚡ Diagnosis requested for ${val} — pulling all data sources...`,'info'],
+    [600,  `Morning Report: equipment status confirmed — ${d.status.toUpperCase()}`,'warn'],
+    [1100, `PI System: vibration ${d.pi.vib} mm/s · temp ${d.pi.temp}°C · speed ${d.pi.rpm} RPM`,'info'],
+    [1700, d.proactive ? `Proactive Monitoring (${d.proactive.engineer}): "${d.proactive.symptom}" — ${d.proactive.confidence}% confidence`:'Proactive Monitoring: no active alert for this equipment','info'],
+    [2300, d.mto ? `MTO: ${d.mto.id} — ${d.mto.desc}`:'MTO: no open threat for this equipment','info'],
+    [2900, d.elog ? `eLog (${d.elog.operator} @ ${d.elog.time}): "${d.elog.note}"`:'eLog: no operator entry linked','purple'],
+    [3500, `SAP PM/CM: ${d.woNumber} — ${d.woDesc} · MTTR ${d.mttr}`,'ok'],
+    [4200, `Feature extraction complete — ${Object.values(d).filter(Boolean).length * 7} signals processed across 7 sources`,'info'],
+    [5000, `ML model running fault classification — comparing against fleet history...`,'warn'],
+    [5800, `Root cause ranked — 4 contributing factors identified`,'ok'],
+    [6400, `✅ Diagnosis complete — rendering recommendation for technician`,'ok'],
+  ];
+  logs.forEach(([t,msg,cls])=>setTimeout(()=>addLog(msg,cls),t));
+
+  // Pipeline animation
+  [300,1000,1800,2500,3200,4000,5500].forEach((t,i)=>{
+    setTimeout(()=>{
+      if(i>0)document.getElementById('ds'+(i-1)).className='ds-pill done';
+      document.getElementById('ds'+i).className='ds-pill active';
+    },t);
+  });
+  setTimeout(()=>document.getElementById('ds6').className='ds-pill done',6200);
+
+  setTimeout(()=>showDiagnosis(val),6800);
+}
+
+function addLog(msg,cls='norm'){
+  const s=document.getElementById('logStream');
+  const t=new Date().toLocaleTimeString();
+  const e=document.createElement('div');
+  e.className='le';
+  e.innerHTML=`<span class="lt">${t}</span><span class="lm ${cls}">${msg}</span>`;
+  s.appendChild(e);s.scrollTop=s.scrollHeight;
+}
+
+function showDiagnosis(val){
+  const d=DB[val];
+  document.getElementById('idleMsg').style.display='none';
+  const card=document.getElementById('diagCard');
+  card.style.display='block';
+
+  const hdr=document.getElementById('diagHdr');
+  hdr.className='diag-hdr '+d.severity;
+  const chip=document.getElementById('sevChip');
+  chip.textContent=d.severity.toUpperCase();
+  chip.className='sev-chip '+d.severity;
+
+  document.getElementById('faultName').textContent=d.faultName;
+  document.getElementById('faultDesc').textContent=d.faultDesc;
+  document.getElementById('mDefer$').textContent=d.bpdDollar||'—';
+  document.getElementById('mAlarm').textContent=d.alarmCode;
+  document.getElementById('mTripTime').textContent=d.tripTime||'—';
+  document.getElementById('mTime').textContent=d.tripDuration||'—';
+
+  setTimeout(()=>{
+    document.getElementById('confFill').style.width=d.confidence+'%';
+    document.getElementById('confPct').textContent=d.confidence+'%';
+  },300);
+
+  // Sources
+  const sg=document.getElementById('srcGrid');
+  sg.innerHTML='';
+  const sources=[
+    {tag:'Morning Report',cls:'norm',text:`Status: ${d.status.toUpperCase()} — ${d.alarmCode}`},
+    {tag:'PI System',cls:'pi',text:`Vib: ${d.pi.vib} mm/s · Temp: ${d.pi.temp}°C · Speed: ${d.pi.rpm} RPM`},
+    d.proactive?{tag:'Proactive Monitor',cls:'pm',text:`${d.proactive.level} alert · ${d.proactive.confidence}% · ${d.proactive.engineer}`}:{tag:'Proactive Monitor',cls:'pm',text:'No active alert for this unit'},
+    d.mto?{tag:'MTO',cls:'mto',text:`${d.mto.id}: ${d.mto.desc}`}:{tag:'MTO',cls:'mto',text:'No open MTO threat'},
+    d.elog?{tag:'eLog',cls:'elog',text:`${d.elog.operator}: "${d.elog.note}"`}:{tag:'eLog',cls:'elog',text:'No operator log entry'},
+    {tag:'SAP PM/CM',cls:'sap',text:`${d.woNumber} · MTTR: ${d.mttr} · ${d.woCost}`},
+  ];
+  sources.forEach(s=>{
+    sg.innerHTML+=`<div class="src-item"><div class="src-tag ${s.cls}">${s.tag}</div><div>${s.text}</div></div>`;
+  });
+
+  // Causes
+  const cl=document.getElementById('causeList');
+  cl.innerHTML='';
+  d.causes.forEach((c,i)=>{
+    cl.innerHTML+=`<div class="cause-item"><span class="cause-rank">#${i+1}</span><span>${c}</span></div>`;
+  });
+
+  // Actions
+  const al=document.getElementById('actionList');
+  al.innerHTML='';
+  d.actions.forEach((a,i)=>{
+    al.innerHTML+=`<div class="action-item"><div class="action-num">${i+1}</div><span>${a}</span></div>`;
+  });
+
+  // History
+  const hl=document.getElementById('histList');
+  hl.innerHTML='';
+  d.history.forEach(h=>{
+    const cls=srcTagMap[h.src]||'norm';
+    hl.innerHTML+=`<div class="hist-item"><span class="hist-date">${h.date}</span><span class="src-tag ${cls}" style="flex-shrink:0">${h.src}</span><span>${h.note}</span></div>`;
+  });
+
+  document.getElementById('bDowntime').textContent=d.downtime;
+  document.getElementById('bDefer').textContent=d.deferment;
+  document.getElementById('bCost').textContent=d.cost;
+
+  running=false;
+  document.getElementById('diagnoseBtn').disabled=false;
+}
+
+function fb(ok){
+  const m=document.getElementById('fbMsg');
+  const box=document.getElementById('correctionBox');
+  const yesBtn=document.getElementById('fbYes');
+  const noBtn=document.getElementById('fbNo');
+  if(ok){
+    // Confirmed
+    box.classList.remove('show');
+    m.style.display='inline';
+    m.style.color='var(--green)';
+    m.textContent='✅ Confirmed — model confidence reinforced in training set.';
+    yesBtn.style.opacity='1';
+    noBtn.style.opacity='.4';
+  } else {
+    // Rejected — show correction box
+    m.style.display='none';
+    box.classList.add('show');
+    box.scrollIntoView({behavior:'smooth',block:'nearest'});
+    noBtn.style.opacity='1';
+    yesBtn.style.opacity='.4';
+  }
+}
+
+function cancelCorrection(){
+  document.getElementById('correctionBox').classList.remove('show');
+  document.getElementById('fbMsg').style.display='none';
+  document.getElementById('fbYes').style.opacity='1';
+  document.getElementById('fbNo').style.opacity='1';
+}
+
+function submitCorrection(){
+  const faultType  = document.getElementById('corrFaultType').value;
+  const rootCause  = document.getElementById('corrRootCause').value;
+  const action     = document.getElementById('corrAction').value;
+  const reporter   = document.getElementById('corrReporter').value;
+  const notes      = document.getElementById('corrNotes').value;
+
+  if(!faultType && !rootCause && !action){
+    document.getElementById('corrFaultType').style.borderColor='var(--red)';
+    document.getElementById('corrFaultType').focus();
+    return;
+  }
+
+  // Log correction (in real system this POSTs to API)
+  const correction = {
+    equipment: document.getElementById('eqTag').textContent,
+    timestamp: new Date().toISOString(),
+    aiDiagnosis: document.getElementById('faultName').textContent,
+    correctedFaultType: faultType,
+    correctedRootCause: rootCause,
+    correctiveAction: action,
+    reportedBy: reporter,
+    notes: notes
+  };
+  console.log('Correction submitted:', JSON.stringify(correction, null, 2));
+
+  // Show success
+  document.getElementById('submitOk').style.display='inline';
+  document.getElementById('corrFaultType').disabled=true;
+  document.getElementById('corrRootCause').disabled=true;
+  document.getElementById('corrAction').disabled=true;
+  document.getElementById('corrReporter').disabled=true;
+  document.getElementById('corrNotes').disabled=true;
+  document.querySelector('.submit-btn').disabled=true;
+  document.querySelector('.submit-btn').style.opacity='.5';
+}
+</script>
+</body>
+</html>
